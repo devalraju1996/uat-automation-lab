@@ -11,3 +11,10 @@ Feature: Login to the Payments Portal
     Given I am on the login page
     When I log in as "uat_user" with password "wrong"
     Then I should see the login error "Invalid username or password"
+
+  @regression
+  Scenario: Logout returns to the login page
+    Given I am on the login page
+    When I log in with valid credentials
+    And I log out
+    Then I should be on the login page

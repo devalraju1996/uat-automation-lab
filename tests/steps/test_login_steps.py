@@ -31,3 +31,13 @@ def see_payments(page):
 @then(parsers.parse('I should see the login error "{text}"'))
 def see_login_error(login_page, text):
     assert text in login_page.error_text()
+
+
+@when("I log out")
+def log_out(page):
+    page.click('[data-testid="logout"]')
+
+
+@then("I should be on the login page")
+def on_login(page):
+    expect(page.locator('[data-testid="login-button"]')).to_be_visible()
