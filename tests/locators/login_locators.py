@@ -1,0 +1,5 @@
+USERNAME = '[data-testid="username"]'
+PASSWORD = '[data-testid="password"]'
+LOGIN_BUTTON = '[data-testid="login-button"]'
+LOGIN_ERROR = '[data-testid="login-error"]'
+ENV_BADGE = '[data-testid="env-badge"]'

@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: payments-uat
+resources:
+  - ../../base
+nameSuffix: -uat
+configMapGenerator:
+  - name: payments-portal-config
+    behavior: merge
+    literals:
+      - APP_ENV=uat
+replicas:
+  - name: payments-portal
+    count: 2
+images:
+  - name: payments-portal
+    newTag: latest

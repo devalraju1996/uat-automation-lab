@@ -1,0 +1,39 @@
+# Full UAT regression against the deployed UAT environment.
+# Triggered after deploy, nightly, or manually.
+name: UAT regression
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1-5"   # weekdays 06:00 UTC
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    env:
+      UAT_BASE_URL: ${{ vars.UAT_BASE_URL }}
+      DEMO_USER: ${{ secrets.UAT_USER }}
+      DEMO_PASSWORD: ${{ secrets.UAT_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r requirements.txt && playwright install --with-deps chromium
+      - run: pytest
+      - name: AI failure analysis
+        if: always()
+        env: { ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}" }
+        run: python -m ai_analysis.analyze_failures
+      - name: Report to Jira
+        if: always()
+        env:
+          JIRA_URL: ${{ vars.JIRA_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT: ${{ vars.JIRA_PROJECT }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python -m integrations.jira.jira_reporter
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: uat-regression-artifacts, path: artifacts/ }

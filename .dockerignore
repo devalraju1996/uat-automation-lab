@@ -1,0 +1,7 @@
+.git
+artifacts
+tests
+terraform
+kube
+.github
+__pycache__

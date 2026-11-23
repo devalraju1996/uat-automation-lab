@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-portal
+  labels: { app: payments-portal }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: payments-portal }
+  template:
+    metadata:
+      labels: { app: payments-portal }
+    spec:
+      containers:
+        - name: payments-portal
+          image: payments-portal:latest
+          ports: [{ containerPort: 8000 }]
+          envFrom:
+            - configMapRef: { name: payments-portal-config }
+          env:
+            - name: DEMO_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: payments-portal-secrets, key: demo-password, optional: true }
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 256Mi }

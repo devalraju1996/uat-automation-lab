@@ -1,0 +1,8 @@
+BENEFICIARY = '[data-testid="beneficiary"]'
+AMOUNT = '[data-testid="amount"]'
+CURRENCY = '[data-testid="currency"]'
+SUBMIT = '[data-testid="submit-payment"]'
+MESSAGE = '[data-testid="payment-message"]'
+ERROR = '[data-testid="payment-error"]'
+TABLE = '[data-testid="payments-table"]'
+LOGOUT = '[data-testid="logout"]'

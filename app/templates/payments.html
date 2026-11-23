@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block content %}
+<p><a href="/logout" data-testid="logout">Log out</a></p>
+{% if message %}<p class="msg" data-testid="payment-message">{{ message }}</p>{% endif %}
+{% if error %}<p class="err" data-testid="payment-error">{{ error }}</p>{% endif %}
+<h2>New payment</h2>
+<form method="post" action="/payments">
+  <label>Beneficiary <input name="beneficiary" data-testid="beneficiary"></label><br>
+  <label>Amount <input name="amount" data-testid="amount"></label><br>
+  <label>Currency <select name="currency" data-testid="currency">
+    <option>GBP</option><option>USD</option><option>EUR</option><option>JPY</option></select></label><br>
+  <button type="submit" data-testid="submit-payment">Submit payment</button>
+</form>
+<h2>Payments</h2>
+<table data-testid="payments-table"><tr><th>ID</th><th>Beneficiary</th><th>Amount</th><th>Status</th></tr>
+{% for p in payments %}<tr><td>{{ p.id }}</td><td>{{ p.beneficiary }}</td>
+<td>{{ "%.2f"|format(p.amount) }} {{ p.currency }}</td><td>{{ p.status }}</td></tr>{% endfor %}
+</table>{% endblock %}

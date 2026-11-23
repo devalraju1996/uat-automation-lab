@@ -1,0 +1,60 @@
+# Runs when a PR is merged into main: build image -> push to ECR -> deploy to ECS (UAT) -> run regression.
+name: Deploy to UAT
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # OIDC to AWS, no long-lived keys
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+  ECR_REPOSITORY: payments-portal
+  ECS_CLUSTER: uat-automation-cluster
+  ECS_SERVICE: payments-portal-uat
+  CONTAINER_NAME: payments-portal
+
+concurrency: deploy-uat
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: uat          # add required reviewers on this environment for manual approval
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - id: build
+        run: |
+          IMAGE=${{ steps.ecr.outputs.registry }}/$ECR_REPOSITORY:${GITHUB_SHA::7}
+          docker build -t $IMAGE .
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+      - name: Render task definition with new image
+        run: aws ecs describe-task-definition --task-definition $ECS_SERVICE --query taskDefinition > taskdef.json
+      - id: taskdef
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: taskdef.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build.outputs.image }}
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.taskdef.outputs.task-definition }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          service: ${{ env.ECS_SERVICE }}
+          wait-for-service-stability: true
+
+  regression:
+    needs: deploy
+    uses: ./.github/workflows/uat-regression.yml
+    secrets: inherit
